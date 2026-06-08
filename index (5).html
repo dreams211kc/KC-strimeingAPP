@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>STREAMING KC — Moderno | Social + Playlists</title>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+    }
+
+    body {
+      background: #0f0c1f;
+      overflow-x: hidden;
+    }
+
+    /* SPLASH SCREEN ANIMADO — letras se movendo e se juntando */
+    .splash {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: radial-gradient(circle at 30% 10%, #ff9068, #fd5e53, #2b1e3a);
+      z-index: 2000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      backdrop-filter: blur(2px);
+      transition: opacity 0.8s cubic-bezier(0.23, 1, 0.32, 1), visibility 0.8s;
+    }
+
+    .splash-hidden {
+      opacity: 0;
+      visibility: hidden;
+    }
+
+    .letters-container {
+      display: flex;
+      gap: 0.2rem;
+      perspective: 500px;
+      flex-wrap: wrap;
+      justify-content: center;
+      max-width: 90vw;
+    }
+
+    .splash-letter {
+      font-size: 3.8rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, #fff8e7, #ffdbb5);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      text-shadow: 0 0 15px rgba(255, 120, 60, 0.6);
+      display: inline-block;
+      animation: floatLetter 0.6s cubic-bezier(0.34, 1.2, 0.64, 1) forwards;
+      opacity: 0;
+      transform: translateY(40px) rotateX(20deg);
+    }
+
+    @keyframes floatLetter {
+      0% { opacity: 0; transform: translateY(60px) rotateX(30deg); letter-spacing: 12px; }
+      60% { opacity: 0.8; transform: translateY(-5px) rotateX(0deg); }
+      100% { opacity: 1; transform: translateY(0) rotateX(0); letter-spacing: normal; }
+    }
+
+    /* efeito de junção */
+    .splash-letter.joined {
+      animation: joinGlow 0.5s ease-out forwards;
+    }
+
+    @keyframes joinGlow {
+      0% { text-shadow: 0 0 0px gold; }
+      100% { text-shadow: 0 0 20px #ffb347, 0 0 8px orange; background: linear-gradient(135deg, #fff3bf, #ffcd94); -webkit-background-clip: text; background-clip: text; }
+    }
+
+    /* Tela de login moderna - simplificada */
+    .login-modern {
+      min-height: 100vh;
+      background: linear-gradient(145deg, #fef2e0 0%, #ffe1c4 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1.5rem;
+    }
+
+    .glass-card {
+      background: rgba(255, 255, 245, 0.95);
+      backdrop-filter: blur(12px);
+      border-radius: 56px;
+      padding: 2.5rem 2rem 2.5rem;
+      width: 100%;
+      max-width: 460px;
+      box-shadow: 0 25px 45px rgba(0, 0, 0, 0.2), 0 0 0 1px rgba(255, 255, 255, 0.5);
+      transition: transform 0.2s;
+      text-align: center;
+    }
+
+    .logo-icon {
+      font-size: 4rem;
+      color: #ff6b35;
+      margin-bottom: 0.5rem;
+    }
+
+    /* app container moderno */
+    .app-layout {
+      display: flex;
+      position: relative;
+      min-height: 100vh;
+      background: #f9f5ef;
+    }
+
+    /* MENU LATERAL ESQUERDO (canais 200+) */
+    .left-drawer {
+      position: fixed;
+      top: 0;
+      left: -380px;
+      width: 340px;
+      height: 100vh;
+      background: linear-gradient(145deg, #1a1625, #12101c);
+      z-index: 1300;
+      transition: left 0.4s cubic-bezier(0.2, 0.9, 0.4, 1.2);
+      padding: 1.8rem 1rem;
+      overflow-y: auto;
+      color: white;
+      box-shadow: 8px 0 32px rgba(0, 0, 0, 0.5);
+      border-right: 1px solid rgba(255, 140, 0, 0.3);
+    }
+
+    .left-drawer.open {
+      left: 0;
+    }
+
+    .right-drawer {
+      position: fixed;
+      top: 0;
+      right: -420px;
+      width: 380px;
+      height: 100vh;
+      background: #fffaf2;
+      z-index: 1300;
+      transition: right 0.4s cubic-bezier(0.2, 0.9, 0.4, 1.2);
+      padding: 1.8rem 1rem;
+      overflow-y: auto;
+      box-shadow: -8px 0 32px rgba(0, 0, 0, 0.1);
+      border-left: 1px solid #ffcf9a;
+    }
+
+    .right-drawer.open {
+      right: 0;
+    }
+
+    .drawer-handle {
+      position: fixed;
+      top: 40%;
+      background: #ff7a3c;
+      padding: 14px 8px;
+      border-radius: 28px;
+      cursor: pointer;
+      z-index: 1350;
+      color: white;
+      font-weight: bold;
+      box-shadow: 0 6px 14px rgba(0, 0, 0, 0.3);
+      transition: 0.2s;
+    }
+
+    .handle-left {
+      left: 0;
+      border-radius: 0 32px 32px 0;
+    }
+
+    .handle-right {
+      right: 0;
+      border-radius: 32px 0 0 32px;
+    }
+
+    /* canal cards modernos */
+    .channel-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 14px;
+      padding: 12px 0;
+    }
+
+    .channel-card {
+      background: white;
+      border-radius: 60px;
+      padding: 12px 20px;
+      font-weight: 600;
+      color: #c44512;
+      box-shadow: 0 6px 12px rgba(0, 0, 0, 0.05);
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      backdrop-filter: blur(4px);
+      border: 1px solid #ffceaa;
+    }
+
+    .channel-card:hover {
+      transform: translateY(-4px);
+      background: #ffede1;
+      box-shadow: 0 12px 18px rgba(255, 100, 0, 0.2);
+    }
+
+    .tab-modern {
+      background: #f1e3d4;
+      border-radius: 60px;
+      padding: 10px 22px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: 0.2s;
+      color: #b64926;
+    }
+
+    .tab-modern.active {
+      background: #ff7a3c;
+      color: white;
+      box-shadow: 0 4px 12px #ffa559;
+    }
+
+    /* perfil infantil zone */
+    .kid-card {
+      background: linear-gradient(125deg, #fee9b0, #ffd3b5);
+      border-radius: 48px;
+      padding: 18px;
+      animation: bounceWin 0.4s;
+    }
+
+    @keyframes bounceWin {
+      0% { transform: scale(0.9); opacity: 0; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+
+    .post-social {
+      background: #fff4e8;
+      border-radius: 32px;
+      padding: 16px;
+      margin-bottom: 14px;
+      border-left: 6px solid #ff7a3c;
+    }
+
+    button {
+      background: #ff7a3c;
+      border: none;
+      border-radius: 60px;
+      padding: 12px 20px;
+      font-weight: 600;
+      color: white;
+      cursor: pointer;
+      transition: 0.15s;
+    }
+
+    button:active {
+      transform: scale(0.96);
+    }
+
+    input, textarea, select {
+      border-radius: 60px;
+      border: 1px solid #ffcea2;
+      padding: 12px 18px;
+      background: white;
+      font-size: 0.95rem;
+    }
+
+    .google-btn {
+      background: #4285f4;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      font-size: 1.1rem;
+      width: 100%;
+      padding: 14px;
+      margin-top: 8px;
+    }
+
+    .google-btn i {
+      font-size: 1.3rem;
+    }
+
+    .divider {
+      display: flex;
+      align-items: center;
+      margin: 24px 0;
+      color: #b64926;
+      font-size: 0.85rem;
+    }
+
+    .divider::before, .divider::after {
+      content: "";
+      flex: 1;
+      height: 1px;
+      background: #ffcea2;
+    }
+
+    .divider span {
+      margin: 0 12px;
+    }
+  </style>
+</head>
+<body>
+
+<div id="splashScreen" class="splash">
+  <div class="letters-container" id="splashLettersContainer"></div>
+</div>
+
+<div id="loginContainer" class="login-modern" style="display: none;">
+  <div class="glass-card">
+    <div class="logo-icon">
+      <i class="fas fa-play-circle"></i>
+    </div>
+    <h1 style="color:#c44512; font-size: 1.8rem;">STREAMING KC</h1>
+    <p style="color:#a05a2c; margin: 8px 0 24px;">Entre e compartilhe suas emoções</p>
+    
+    <button id="googleLoginMainBtn" class="google-btn">
+      <i class="fab fa-google"></i> Continuar com Google
+    </button>
+    
+    <div class="divider">
+      <span>Bem-vindo de volta</span>
+    </div>
+    
+    <p style="font-size: 13px; color: #b6693a; margin-top: 16px;">
+      <i class="fas fa-users"></i> Após login, crie perfis para toda família<br>
+      <i class="fas fa-child"></i> Modo infantil com restrições de horário
+    </p>
+  </div>
+</div>
+
+<div id="appRoot" class="app-layout" style="display: none;">
+  <div class="drawer-handle handle-left" id="leftDrawerHandle"><i class="fas fa-bars"></i> Canais</div>
+  <div class="drawer-handle handle-right" id="rightDrawerHandle"><i class="fas fa-user-friends"></i> Social</div>
+
+  <!-- left: menu canais com 200+ -->
+  <div id="leftChannelDrawer" class="left-drawer">
+    <h3><i class="fas fa-tower-broadcast"></i> Biblioteca KC (200+ canais)</h3>
+    <div id="megaChannelList" style="max-height: 80vh; overflow-y: auto; margin-top: 18px; display: flex; flex-direction: column; gap: 8px;"></div>
+  </div>
+
+  <!-- right: perfis, social, amigos, playlist compartilhável -->
+  <div id="rightSocialDrawer" class="right-drawer">
+    <div style="display: flex; justify-content: space-between; align-items:center;">
+      <h3><i class="fas fa-users"></i> Perfis</h3>
+      <button id="addProfileKidBtn" style="background:#f39c12; padding:8px 14px;"><i class="fas fa-child"></i> + infantil</button>
+    </div>
+    <div id="profilesContainer" style="margin: 16px 0;"></div>
+    <hr>
+    <div style="display: flex; justify-content: space-between;">
+      <h3><i class="fas fa-newspaper"></i> Feed Amigos</h3>
+      <button id="addFriendBtn" style="background:#28a47e;"><i class="fas fa-user-plus"></i> Amigo</button>
+    </div>
+    <div id="socialFeedArea" style="margin: 12px 0;"></div>
+    <hr>
+    <h3><i class="fas fa-comment-dots"></i> Privado (compartilhamento)</h3>
+    <div id="privateMessagesArea" style="background:#f9efdf; border-radius: 28px; padding: 12px; max-height: 200px; overflow-y: auto;"></div>
+    <hr>
+    <button id="createNewPlaylistBtn" style="background:#ffaa5e; width:100%;"><i class="fas fa-list"></i> Criar playlist personalizada</button>
+  </div>
+
+  <!-- Conteúdo principal -->
+  <div style="flex:1; padding: 20px; margin-left: 0px;">
+    <div class="tabs-wrapper" style="display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 28px; justify-content: center;">
+      <div class="tab-modern active" data-cat="0">📺 TV Aberta</div>
+      <div class="tab-modern" data-cat="1">📡 TV Paga</div>
+      <div class="tab-modern" data-cat="2">🧸 Infantil</div>
+      <div class="tab-modern" data-cat="3">⚽ Esportes</div>
+      <div class="tab-modern" data-cat="4">⭐ Minha Playlist</div>
+    </div>
+    <div id="channelsDynamicArea" style="background: #fffbf4; border-radius: 48px; padding: 20px; min-height: 280px;"></div>
+
+    <!-- resenha e interação -->
+    <div style="background: #ffefe2; border-radius: 48px; margin-top: 32px; padding: 24px;">
+      <h4><i class="fas fa-pen-fancy"></i> Resenha sobre episódio / canal</h4>
+      <textarea id="reviewTextInput" rows="2" style="width:100%; border-radius: 32px;" placeholder="O que você achou? Comente para seus amigos..."></textarea>
+      <select id="reviewChannelSelect" style="width:60%; border-radius: 60px;"></select>
+      <div style="display: flex; gap:12px; margin-top: 12px;">
+        <button id="postPublicReviewBtn"><i class="fas fa-globe"></i> Postar Público</button>
+        <button id="postPrivateMsgBtn" style="background:#6c5b7b;"><i class="fas fa-lock"></i> Enviar para amigo (privado)</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // ----- DATA MODEL -----
+  let currentMainUser = {
+    name: "",
+    email: "",
+    profiles: [],         // perfis adicionais (máx 2)
+    friends: ["Carol", "Rafael"],
+    reviews: [],
+    privateMessages: [],
+    playlists: []        // lista de playlists salvas
+  };
+  let currentActiveProfile = { name: "Principal", isKid: false, restrictions: { maxHour: null, blockedCategories: [] } };
+  let userPlaylistChannels = [];  // canais favoritos (playlist principal)
+  let allChannelsList = [];
+
+  // gerar 200 canais com nomes criativos
+  for (let i = 1; i <= 200; i++) {
+    allChannelsList.push(`KC ${i} · ${["HD", "4K", "PREMIUM", "LIVE", "SÉRIES"][i%5]}${Math.floor(Math.random()*99)}`);
+  }
+
+  const categoriesData = {
+    0: ["Globo HD", "SBT", "Record", "Band 4K", "RedeTV", "TV Cultura", "Gazeta"],
+    1: ["HBO Max", "Discovery", "FX", "Warner", "AXN", "TNT Séries", "Star Channel"],
+    2: ["Discovery Kids", "Cartoon Network", "Nick Jr.", "Disney Jr.", "Mundo Bita", "Peppa Pig Live"],
+    3: ["ESPN 4K", "Sportv", "Fox Sports", "Band Sports", "Premiere", "Eleven Sports"]
+  };
+
+  // preenche menu lateral com 200+ canais
+  function buildLeftMenu() {
+    const container = document.getElementById('megaChannelList');
+    if (!container) return;
+    container.innerHTML = '';
+    allChannelsList.forEach(ch => {
+      const div = document.createElement('div');
+      div.style.background = '#2f2b3a';
+      div.style.padding = '10px 14px';
+      div.style.borderRadius = '40px';
+      div.style.cursor = 'pointer';
+      div.style.transition = '0.1s';
+      div.innerHTML = `<i class="fas fa-play-circle"></i> ${ch}`;
+      div.onclick = () => alert(`🎬 Exibindo ${ch} em breve! (Futuro vídeo)`);
+      container.appendChild(div);
+    });
+  }
+
+  function renderProfilesList() {
+    const container = document.getElementById('profilesContainer');
+    if (!container) return;
+    let html = `<div class="kid-card" style="padding:10px;"><strong>👑 Responsável:</strong> ${currentMainUser.name}</div>`;
+    currentMainUser.profiles.forEach((p, idx) => {
+      html += `<div style="display:flex; justify-content:space-between; align-items:center; background:#f5e5d5; border-radius:40px; padding:10px; margin-top:8px;">
+        <span><i class="fas fa-${p.isKid ? 'baby' : 'user'}"></i> ${p.name} ${p.isKid ? '🔞 restrições ativas' : ''}</span>
+        <div><button onclick="switchToProfileHandler(${idx})">Trocar</button> <button onclick="removeProfileHandler(${idx})">🗑️</button></div>
+      </div>`;
+    });
+    if (currentMainUser.profiles.length < 2) {
+      html += `<button id="quickKidBtn" style="background:#f4a261; margin-top:12px;"><i class="fas fa-plus-circle"></i> Novo perfil infantil</button>`;
+    }
+    container.innerHTML = html;
+    document.getElementById('quickKidBtn')?.addEventListener('click', openKidCreationModal);
+  }
+
+  function openKidCreationModal() {
+    const modalDiv = document.createElement('div');
+    modalDiv.style.position = 'fixed'; modalDiv.style.top = '0'; modalDiv.style.left = '0'; modalDiv.style.width = '100%'; modalDiv.style.height = '100%';
+    modalDiv.style.background = 'rgba(0,0,0,0.7)'; modalDiv.style.zIndex = '2000'; modalDiv.style.display = 'flex'; modalDiv.style.alignItems = 'center'; modalDiv.style.justifyContent = 'center';
+    modalDiv.innerHTML = `<div class="kid-card" style="max-width: 360px; background: linear-gradient(145deg, #fff3e2, #ffe0c4);">
+      <i class="fas fa-candy-cane" style="font-size: 40px;"></i>
+      <h2>✨ Modo Infantil ✨</h2>
+      <input id="kidNameInput" placeholder="Nome da criança" style="width:100%; margin:8px 0;">
+      <label>⏰ Horário para bloquear: <input type="time" id="kidTimeRestrict"></label>
+      <label>🔒 Censura: <select id="kidRestrictSelect"><option>Livre</option><option>+10</option><option>+12</option></select></label>
+      <div style="display:flex; gap:10px; margin-top:16px;"><button id="confirmKidCreation">Criar</button><button id="closeKidModal">Fechar</button></div>
+    </div>`;
+    document.body.appendChild(modalDiv);
+    document.getElementById('confirmKidCreation').onclick = () => {
+      const nomeKid = document.getElementById('kidNameInput').value;
+      if (!nomeKid) return;
+      if (currentMainUser.profiles.length >= 2) { alert("Máximo 2 perfis adicionais"); modalDiv.remove(); return; }
+      currentMainUser.profiles.push({ name: nomeKid, isKid: true, restrictions: { maxHour: document.getElementById('kidTimeRestrict').value, ageLevel: document.getElementById('kidRestrictSelect').value } });
+      renderProfilesList();
+      modalDiv.remove();
+      alert(`Perfil ${nomeKid} criado! O responsável pode definir horário de parada.`);
+    };
+    document.getElementById('closeKidModal').onclick = () => modalDiv.remove();
+  }
+
+  window.switchToProfileHandler = (idx) => {
+    currentActiveProfile = currentMainUser.profiles[idx];
+    alert(`Perfil alterado: ${currentActiveProfile.name} ${currentActiveProfile.isKid ? '🔞 restrições ativas' : ''}`);
+    renderSocialFeed();
+  };
+  window.removeProfileHandler = (idx) => {
+    if (confirm("Remover esse perfil?")) currentMainUser.profiles.splice(idx, 1);
+    renderProfilesList();
+  };
+
+  function renderSocialFeed() {
+    const feedDiv = document.getElementById('socialFeedArea');
+    if (!feedDiv) return;
+    if (currentMainUser.reviews.length === 0) feedDiv.innerHTML = '<div style="padding:20px; text-align:center;">Nenhuma resenha pública. Compartilhe algo!</div>';
+    else {
+      feedDiv.innerHTML = currentMainUser.reviews.map(r => `
+        <div class="post-social">
+          <div><strong><i class="fas fa-user-circle"></i> ${r.author}</strong> · <i class="fas fa-tv"></i> ${r.channel}</div>
+          <p>💬 ${r.text}</p>
+          <div style="display:flex; gap:12px; margin-top:8px;"><i class="far fa-heart"></i> Curtir <i class="far fa-comment"></i> Responder</div>
+        </div>
+      `).join('');
+    }
+  }
+
+  function renderPrivateMessages() {
+    const privDiv = document.getElementById('privateMessagesArea');
+    if (!privDiv) return;
+    if (currentMainUser.privateMessages.length === 0) privDiv.innerHTML = '<p>💬 Nenhuma conversa privada. Compartilhe uma resenha com amigo!</p>';
+    else {
+      privDiv.innerHTML = currentMainUser.privateMessages.map(m => `<div style="background:#ffe2c9; border-radius: 28px; padding:8px; margin-bottom:8px;"><strong>${m.from} → ${m.to}:</strong> ${m.content}</div>`).join('');
+    }
+  }
+
+  function postReview(isPublic, targetFriendName = null) {
+    const text = document.getElementById('reviewTextInput').value;
+    const channel = document.getElementById('reviewChannelSelect').value;
+    if (!text.trim() || !channel) return alert("Escreva uma resenha e escolha o canal.");
+    if (isPublic) {
+      currentMainUser.reviews.unshift({ id: Date.now(), author: currentMainUser.name, channel, text });
+      renderSocialFeed();
+      alert("Resenha publicada no feed público!");
+    } else {
+      let friend = targetFriendName;
+      if (!friend) friend = prompt("Digite o nome do amigo (da sua lista) para enviar resenha privada:");
+      if (friend && currentMainUser.friends.includes(friend)) {
+        currentMainUser.privateMessages.push({ from: currentMainUser.name, to: friend, content: `Resenha sobre ${channel}: "${text}"`, timestamp: new Date() });
+        renderPrivateMessages();
+        alert(`Enviado em conversa privada para ${friend}.`);
+      } else alert("Amigo não encontrado na sua lista. Adicione amigos primeiro.");
+    }
+    document.getElementById('reviewTextInput').value = '';
+  }
+
+  function addFriend() {
+    let friendName = prompt("Nome do amigo (cadastrado no streaming KC)");
+    if (friendName && !currentMainUser.friends.includes(friendName)) {
+      currentMainUser.friends.push(friendName);
+      alert(`${friendName} adicionado! Agora pode receber resenhas privadas.`);
+    } else alert("Amigo já existe ou nome inválido.");
+  }
+
+  function sharePlaylistGlobally() {
+    if (userPlaylistChannels.length === 0) return alert("Sua playlist está vazia. Favorite canais com estrela.");
+    const playlistLink = `kcstream://playlist?data=${encodeURIComponent(JSON.stringify(userPlaylistChannels))}&owner=${currentMainUser.name}`;
+    navigator.clipboard.writeText(playlistLink);
+    alert("Link da sua playlist copiado! Compartilhe com amigos. Eles poderão ver a sequência de canais.");
+  }
+
+  function renderMainContent(catId) {
+    const container = document.getElementById('channelsDynamicArea');
+    if (catId === 4) {
+      if (userPlaylistChannels.length === 0) container.innerHTML = `<div style="text-align:center; padding:40px;">⭐ Nenhum canal favorito. Clique na estrela nos canais para montar sua playlist.</div>`;
+      else {
+        container.innerHTML = `<div class="channel-grid">${userPlaylistChannels.map(ch => `<div class="channel-card">🎬 ${ch} <i class="fas fa-share-alt" style="margin-left:12px; color:#ff7a3c;" onclick="sharePlaylistGlobally()"></i></div>`).join('')}</div><button onclick="sharePlaylistGlobally()" style="margin-top:16px;"><i class="fas fa-share-square"></i> Compartilhar Playlist</button>`;
+      }
+      return;
+    }
+    const chList = categoriesData[catId] || categoriesData[0];
+    container.innerHTML = `<div class="channel-grid">${chList.map(ch => `<div class="channel-card">${ch} <i class="far fa-star favorite-star" data-channel="${ch}" style="margin-left:10px; cursor:pointer;"></i></div>`).join('')}</div>`;
+    document.querySelectorAll('.favorite-star').forEach(star => {
+      star.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const channelName = star.getAttribute('data-channel');
+        if (!userPlaylistChannels.includes(channelName)) {
+          userPlaylistChannels.push(channelName);
+          alert(`${channelName} adicionado à sua playlist! Vá na aba "Minha Playlist" para ver.`);
+        } else alert("Canal já está na playlist.");
+      });
+    });
+  }
+
+  window.sharePlaylistGlobally = sharePlaylistGlobally;
+
+  function fillChannelSelectList() {
+    const select = document.getElementById('reviewChannelSelect');
+    const all = [...categoriesData[0], ...categoriesData[1], ...categoriesData[2], ...categoriesData[3]];
+    select.innerHTML = all.map(ch => `<option>${ch}</option>`).join('');
+  }
+
+  // animação das letras no splash
+  const splashDiv = document.getElementById('splashScreen');
+  const lettersContainer = document.getElementById('splashLettersContainer');
+  const text = "STREAMING KC";
+  for (let i = 0; i < text.length; i++) {
+    const span = document.createElement('span');
+    span.textContent = text[i];
+    span.className = 'splash-letter';
+    span.style.animationDelay = `${i * 0.08}s`;
+    lettersContainer.appendChild(span);
+  }
+  setTimeout(() => {
+    document.querySelectorAll('.splash-letter').forEach(el => el.classList.add('joined'));
+  }, 700);
+  setTimeout(() => {
+    splashDiv.classList.add('splash-hidden');
+    setTimeout(() => {
+      splashDiv.style.display = 'none';
+      document.getElementById('loginContainer').style.display = 'flex';
+    }, 800);
+  }, 2600);
+
+  // LOGIN APENAS COM GOOGLE
+  function handleGoogleLogin() {
+    const userName = prompt("Digite seu nome completo para continuar:");
+    if (userName && userName.trim()) {
+      currentMainUser.name = userName.trim();
+      currentMainUser.email = "usuario@google.com";
+      document.getElementById('loginContainer').style.display = 'none';
+      document.getElementById('appRoot').style.display = 'flex';
+      buildLeftMenu();
+      renderProfilesList();
+      renderSocialFeed();
+      renderPrivateMessages();
+      fillChannelSelectList();
+      renderMainContent(0);
+    } else {
+      alert("Nome obrigatório para criar sua conta.");
+    }
+  }
+
+  document.getElementById('googleLoginMainBtn').onclick = handleGoogleLogin;
+
+  // eventos dos drawers
+  const leftDrawer = document.getElementById('leftChannelDrawer');
+  const rightDrawer = document.getElementById('rightSocialDrawer');
+  document.getElementById('leftDrawerHandle').onclick = () => leftDrawer.classList.toggle('open');
+  document.getElementById('rightDrawerHandle').onclick = () => rightDrawer.classList.toggle('open');
+  document.getElementById('postPublicReviewBtn').onclick = () => postReview(true);
+  document.getElementById('postPrivateMsgBtn').onclick = () => postReview(false);
+  document.getElementById('addFriendBtn').onclick = addFriend;
+  document.getElementById('createNewPlaylistBtn').onclick = () => { let name = prompt("Nome da playlist"); if(name) alert(`Playlist "${name}" criada! Adicione canais favoritos clicando nas estrelas.`); };
+  document.getElementById('addProfileKidBtn').onclick = openKidCreationModal;
+
+  document.querySelectorAll('.tab-modern').forEach(tab => {
+    tab.addEventListener('click', (e) => {
+      document.querySelectorAll('.tab-modern').forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      renderMainContent(parseInt(tab.dataset.cat));
+    });
+  });
+</script>
+</body>
+</html>
